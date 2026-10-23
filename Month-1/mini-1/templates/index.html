@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crypto Dashboard</title>
+
+    <!-- Bootstrap & Chart.js -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { background-color: #0d1117; color: #fff; }
+        .sidebar { width: 220px; height: 100vh; background-color: #161b22; position: fixed; padding: 20px; }
+        .sidebar a { display: block; color: #58a6ff; margin-bottom: 15px; font-size: 1.1rem; text-decoration: none; }
+        .content { margin-left: 240px; padding: 20px; }
+        .crypto-card { background-color: #161b22; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        .crypto-name { font-size: 1.4rem; color: #58a6ff; }
+        .price { font-size: 1.3rem; font-weight: bold; }
+        .chart-container { background-color: #161b22; padding: 20px; border-radius: 10px; margin-top: 30px; }
+        .light-theme { background-color: #f5f5f5; color: #000; }
+        .light-theme .crypto-card,
+        .light-theme .chart-container,
+        .light-theme .sidebar { background-color: #ffffff; color: #000; }
+        .light-theme .sidebar a { color: #0d6efd; }
+    </style>
+</head>
+
+<body>
+<div class="sidebar">
+    <h2>Crypto Dashboard</h2>
+    <a href="/">Home</a>
+    <a href="#chart">Chart</a>
+</div>
+
+<div class="content">
+    <h1 class="mb-3">Crypto Price Dashboard</h1>
+
+    <div class="mb-3 d-flex gap-2">
+        <input type="text" id="searchBox" class="form-control" placeholder="Search coin...">
+        <button class="btn btn-secondary" onclick="toggleTheme()">Toggle Theme</button>
+        <button class="btn btn-success" onclick="location.reload()">Refresh</button>
+    </div>
+
+    <!-- Cards -->
+    <div id="cardsContainer">
+        {% for row in data %}
+        <div class="crypto-card">
+            <div class="crypto-name">{{ row['Name'] }}</div>
+            <div class="price">{{ row['Price'] }}</div>
+            <div>24h Change: {{ row['24h Change'] }}</div>
+            <div>Market Cap: {{ row['Market Cap'] }}</div>
+            <div class="text-muted">Updated: {{ row['Timestamp'] }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-container" id="chart">
+        <h2 class="mb-3">Price Chart</h2>
+        <canvas id="priceChart"></canvas>
+    </div>
+</div>
+
+<script>
+async function loadChart() {
+    const response = await fetch("/chart-data");
+    const data = await response.json();
+
+    const ctx = document.getElementById("priceChart").getContext("2d");
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.labels,   // timestamps from CSV
+            datasets: [{
+                label: "Price (USD)",
+                data: data.prices,  // numeric prices
+                borderColor: "#58a6ff",
+                backgroundColor: "rgba(88, 166, 255, 0.2)",
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: "#fff" } },
+                title: { display: true, text: "Price Chart", color: "#fff" }
+            },
+            scales: {
+                x: {
+                    ticks: { color: "#fff" },
+                    title: { display: true, text: "Timestamp", color: "#fff" }
+                },
+                y: {
+                    ticks: { color: "#fff" },
+                    title: { display: true, text: "Price (USD)", color: "#fff" }
+                }
+            }
+        }
+    });
+}
+
+loadChart();
+
+// Search filter
+document.getElementById("searchBox").addEventListener("keyup", function() {
+    let value = this.value.toLowerCase();
+    let cards = document.querySelectorAll(".crypto-card");
+    cards.forEach(card => {
+        let name = card.querySelector(".crypto-name").innerText.toLowerCase();
+        card.style.display = name.includes(value) ? "block" : "none";
+    });
+});
+
+// Theme toggle
+function toggleTheme() {
+    document.body.classList.toggle("light-theme");
+}
+</script>
+</body>
+</html>

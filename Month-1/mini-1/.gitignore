@@ -1,0 +1,5 @@
+crypto_data.csv
+venv/
+__pycache__/
+*.log
+*.tmp
